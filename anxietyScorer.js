@@ -2,14 +2,17 @@
 
 class AnxietyScorer {
   constructor() {
-    // 权重配置
-    this.weights = {
+    // 默认权重配置
+    this.defaultWeights = {
       openDuration: 0.3,        // 已打开时长权重
       duplicateDomain: 0.25,    // 重复域名权重
       inactiveTime: 0.2,        // 未聚焦时长权重
       isSearchPage: 0.15,       // 搜索结果页权重
       unreadArticle: 0.1        // 未读文章权重
     };
+    
+    // 权重配置
+    this.weights = { ...this.defaultWeights };
 
     // 阈值配置
     this.thresholds = {
@@ -17,6 +20,83 @@ class AnxietyScorer {
       inactiveTime: 30 * 60 * 1000,          // 30分钟未聚焦
       unreadScrollThreshold: 300             // 300px 滚动阈值
     };
+    
+    this.loadCustomWeights();
+  }
+
+  /**
+   * 从存储加载自定义权重
+   */
+  async loadCustomWeights() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['customAnxietyWeights'], (result) => {
+        if (result.customAnxietyWeights) {
+          this.weights = { ...this.defaultWeights, ...result.customAnxietyWeights };
+        }
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * 保存自定义权重
+   */
+  async saveCustomWeights(weights) {
+    this.weights = { ...this.defaultWeights, ...weights };
+    return new Promise((resolve) => {
+      chrome.storage.local.set({ customAnxietyWeights: weights }, () => {
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * 获取当前权重
+   */
+  getWeights() {
+    return { ...this.weights };
+  }
+
+  /**
+   * 重置为默认权重
+   */
+  async resetWeights() {
+    this.weights = { ...this.defaultWeights };
+    return new Promise((resolve) => {
+      chrome.storage.local.remove(['customAnxietyWeights'], () => {
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * 应用预设权重
+   */
+  async applyPreset(preset) {
+    let weights;
+    switch (preset) {
+      case 'aggressive':
+        weights = {
+          openDuration: 0.4,
+          duplicateDomain: 0.3,
+          inactiveTime: 0.2,
+          isSearchPage: 0.1,
+          unreadArticle: 0.0
+        };
+        break;
+      case 'conservative':
+        weights = {
+          openDuration: 0.2,
+          duplicateDomain: 0.2,
+          inactiveTime: 0.15,
+          isSearchPage: 0.2,
+          unreadArticle: 0.25
+        };
+        break;
+      default:
+        weights = { ...this.defaultWeights };
+    }
+    await this.saveCustomWeights(weights);
   }
 
   /**

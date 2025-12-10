@@ -1,12 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Tab Anxiety Killer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "智能轻巧的浏览器标签页管理器 - 自动分类、焦虑评分、一键归档",
   "permissions": [
     "tabs",
+    "tabGroups",
     "storage",
-    "activeTab"
+    "activeTab",
+    "notifications",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -22,6 +25,13 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

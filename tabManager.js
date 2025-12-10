@@ -11,21 +11,53 @@ class TabManager {
    * @returns {Promise<Array>} 分类后的标签页数组
    */
   async getAllTabsWithInfo() {
+    // 确保加载自定义规则和权重
+    await this.classifier.loadCustomRules();
+    await this.scorer.loadCustomWeights();
+    
     return new Promise((resolve) => {
       chrome.tabs.query({}, async (tabs) => {
+        // 获取所有分组信息
+        const groupsMap = await this.getGroupsMap();
+        
+        // 获取自定义标题
+        const customTitles = await new Promise((resolve) => {
+          chrome.storage.local.get(['customTabTitles'], (result) => {
+            resolve(result.customTabTitles || {});
+          });
+        });
+        
         const tabsWithInfo = await Promise.all(
           tabs.map(async (tab) => {
             const category = this.classifier.classify(tab);
             const anxietyScore = this.scorer.calculateAnxietyScore(tab, tabs);
             const anxietyLevel = this.scorer.getAnxietyLevel(anxietyScore);
             
+            // 获取分组信息 - 确保正确处理 groupId
+            const tabGroupId = (tab.groupId !== undefined && tab.groupId !== null && tab.groupId !== -1) 
+              ? tab.groupId 
+              : null;
+            
+            const groupInfo = tabGroupId && groupsMap[tabGroupId] 
+              ? groupsMap[tabGroupId] 
+              : null;
+            
+            // 使用自定义标题（如果存在）
+            const customTitle = customTitles[tab.id];
+            const displayTitle = customTitle || tab.title;
+            
             return {
               ...tab,
+              title: displayTitle, // 使用自定义标题或原始标题
+              originalTitle: tab.title, // 保存原始标题
+              customTitle: customTitle, // 保存自定义标题（如果有）
               category,
               categoryName: this.classifier.getCategoryName(category),
               anxietyScore,
               anxietyLevel,
-              domain: this.scorer.getDomain(tab.url)
+              domain: this.scorer.getDomain(tab.url),
+              groupId: tabGroupId || -1,
+              groupInfo: groupInfo
             };
           })
         );
@@ -34,6 +66,42 @@ class TabManager {
         tabsWithInfo.sort((a, b) => b.anxietyScore - a.anxietyScore);
         resolve(tabsWithInfo);
       });
+    });
+  }
+
+  /**
+   * 获取所有分组信息映射
+   * @returns {Promise<Object>} 分组ID到分组信息的映射
+   */
+  async getGroupsMap() {
+    return new Promise((resolve) => {
+      if (chrome.tabGroups && chrome.tabGroups.query) {
+        chrome.tabGroups.query({}, (groups) => {
+          if (chrome.runtime.lastError) {
+            // 静默处理错误，避免影响用户体验
+            resolve({});
+            return;
+          }
+          
+          const groupsMap = {};
+          if (groups && Array.isArray(groups)) {
+            groups.forEach(group => {
+              if (group && group.id !== undefined) {
+                groupsMap[group.id] = {
+                  id: group.id,
+                  title: group.title || '',
+                  color: group.color || 'grey',
+                  collapsed: group.collapsed || false
+                };
+              }
+            });
+          }
+          resolve(groupsMap);
+        });
+      } else {
+        // API 不可用时返回空对象
+        resolve({});
+      }
     });
   }
 
@@ -150,6 +218,29 @@ class TabManager {
   }
 
   /**
+   * 重命名会话
+   * @param {string} sessionId - 会话 ID
+   * @param {string} newName - 新名称
+   * @returns {Promise<void>}
+   */
+  async renameSession(sessionId, newName) {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['sessions'], (result) => {
+        const sessions = result.sessions || [];
+        const session = sessions.find(s => s.id === sessionId);
+        if (session) {
+          session.name = newName;
+          chrome.storage.local.set({ sessions }, () => {
+            resolve();
+          });
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
    * 关闭标签页
    * @param {number|Array<number>} tabIds - 标签页 ID 或 ID 数组
    * @returns {Promise<void>}
@@ -174,11 +265,115 @@ class TabManager {
       if (!grouped[tab.category]) {
         grouped[tab.category] = {
           name: tab.categoryName,
-          tabs: []
+          tabs: [],
+          totalAnxiety: 0,
+          avgAnxiety: 0
         };
       }
       grouped[tab.category].tabs.push(tab);
     });
+    
+    // 计算每个分类的总焦虑值和平均焦虑值
+    Object.keys(grouped).forEach(category => {
+      const group = grouped[category];
+      if (group.tabs.length > 0) {
+        group.totalAnxiety = group.tabs.reduce((sum, tab) => sum + (tab.anxietyScore || 0), 0);
+        group.avgAnxiety = Math.round(group.totalAnxiety / group.tabs.length);
+      }
+    });
+    
+    return grouped;
+  }
+
+  /**
+   * 按Chrome分组分组标签页
+   * @param {Array} tabs - 标签页数组
+   * @returns {Promise<Object>} 按分组分组的标签页
+   */
+  async groupByChromeGroup(tabs) {
+    // 重新获取分组信息以确保最新
+    const groupsMap = await this.getGroupsMap();
+    
+    const grouped = {};
+    tabs.forEach(tab => {
+      // 检查 tab.groupId，可能是数字或 -1
+      const groupId = (tab.groupId !== undefined && tab.groupId !== null && tab.groupId !== -1) 
+        ? tab.groupId 
+        : 'ungrouped';
+      
+      if (!grouped[groupId]) {
+        if (groupId === 'ungrouped') {
+          grouped[groupId] = {
+            id: 'ungrouped',
+            name: typeof i18n !== 'undefined' ? i18n.t('noGroup') : '未分组',
+            color: 'grey',
+            tabs: [],
+            totalAnxiety: 0,
+            avgAnxiety: 0
+          };
+        } else {
+          // 优先使用 tab 中已有的 groupInfo，否则从 groupsMap 获取
+          const groupInfo = tab.groupInfo || groupsMap[groupId];
+          
+          if (groupInfo && groupInfo.title) {
+            // 如果分组有标题，使用标题
+            const groupName = groupInfo.title.trim() || `Group ${groupId}`;
+            
+            grouped[groupId] = {
+              id: groupId,
+              name: groupName,
+              color: groupInfo.color || 'grey',
+              tabs: [],
+              totalAnxiety: 0,
+              avgAnxiety: 0
+            };
+          } else if (groupInfo) {
+            // 有分组信息但没有标题，使用默认名称
+            grouped[groupId] = {
+              id: groupId,
+              name: `Group ${groupId}`,
+              color: groupInfo.color || 'grey',
+              tabs: [],
+              totalAnxiety: 0,
+              avgAnxiety: 0
+            };
+          } else {
+            // 如果找不到分组信息，尝试直接从 Chrome API 获取单个分组
+            // 作为后备方案，使用默认名称
+            grouped[groupId] = {
+              id: groupId,
+              name: `Group ${groupId}`,
+              color: 'grey',
+              tabs: [],
+              totalAnxiety: 0,
+              avgAnxiety: 0
+            };
+            
+            // 尝试获取单个分组信息
+            if (chrome.tabGroups && chrome.tabGroups.get) {
+              chrome.tabGroups.get(groupId, (group) => {
+                if (!chrome.runtime.lastError && group && group.title) {
+                  // 更新分组名称
+                  grouped[groupId].name = group.title.trim() || `Group ${groupId}`;
+                  grouped[groupId].color = group.color || 'grey';
+                }
+              });
+            }
+          }
+        }
+      }
+      grouped[groupId].tabs.push(tab);
+    });
+    
+    // 计算每个分组的总焦虑值和平均焦虑值
+    Object.keys(grouped).forEach(groupId => {
+      const group = grouped[groupId];
+      if (group.tabs.length > 0) {
+        group.totalAnxiety = group.tabs.reduce((sum, tab) => sum + (tab.anxietyScore || 0), 0);
+        group.avgAnxiety = Math.round(group.totalAnxiety / group.tabs.length);
+      }
+    });
+    
     return grouped;
   }
 }

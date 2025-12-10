@@ -11,21 +11,23 @@
     <header class="header">
       <h1>Tab Anxiety Killer</h1>
       <div class="header-actions">
-        <button id="lang-btn" class="icon-btn lang-btn" title="切换语言">🌐</button>
-        <button id="sessions-btn" class="icon-btn" data-i18n-title="viewArchives">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
-        </button>
-        <button id="archive-btn" class="icon-btn" data-i18n-title="archiveAllTabs">
+        <!-- 主要操作按钮 -->
+        <button id="archive-btn" class="icon-btn primary" data-i18n-title="archiveAllTabs" title="归档所有标签" aria-label="归档所有标签" role="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="4" rx="1"></rect>
             <path d="M5 8h14v12H5z"></path>
             <path d="M10 12h4"></path>
           </svg>
         </button>
-        <button id="refresh-btn" class="icon-btn" data-i18n-title="refreshTabs">
+        <button id="batch-mode-btn" class="icon-btn primary" data-i18n-title="toggleBatchMode" title="批量模式" aria-label="切换批量模式" role="button" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+        <button id="refresh-btn" class="icon-btn" data-i18n-title="refreshTabs" title="刷新" aria-label="刷新标签页列表" role="button">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
             <path d="M21 3v5h-5"></path>
@@ -33,10 +35,94 @@
             <path d="M3 21v-5h5"></path>
           </svg>
         </button>
+        
+        <!-- 更多操作菜单 -->
+        <div class="more-menu">
+          <button id="more-btn" class="icon-btn" title="更多" aria-label="更多选项" aria-haspopup="true" aria-expanded="false" role="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+          <div id="more-menu" class="more-menu-dropdown" style="display: none;">
+            <button id="sessions-btn" class="more-menu-item" data-i18n-title="viewArchives">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              <span data-i18n="viewArchives">查看归档</span>
+            </button>
+            <button id="settings-btn" class="more-menu-item" data-i18n-title="settings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+              </svg>
+              <span data-i18n="settings">设置</span>
+            </button>
+            <div class="more-menu-divider"></div>
+            <div class="theme-selector-inline">
+              <button id="theme-btn" class="more-menu-item" data-i18n-title="switchTheme">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <span data-i18n="switchTheme">切换风格</span>
+                <span id="theme-label-inline" class="theme-label-inline"></span>
+              </button>
+              <div id="theme-menu" class="theme-menu">
+                <!-- 主题选项将动态生成 -->
+              </div>
+            </div>
+            <button id="lang-btn" class="more-menu-item" title="切换语言">
+              <span>🌐</span>
+              <span data-i18n="switchLanguage">切换语言</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
     <div id="stats" class="stats"></div>
+
+    <!-- 搜索和筛选栏 -->
+    <div class="search-filter-bar">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="search-input" class="search-input" placeholder="搜索标签页..." data-i18n-placeholder="searchPlaceholder">
+        <button id="search-options-btn" class="search-options-btn" title="搜索选项">⚙</button>
+        <button id="clear-search" class="clear-search-btn" style="display: none;">×</button>
+        <div id="search-options-menu" class="search-options-menu" style="display: none;">
+          <label><input type="checkbox" id="use-regex"> 正则表达式</label>
+          <label><input type="checkbox" id="case-sensitive"> 区分大小写</label>
+          <div class="search-history">
+            <div class="search-history-title">搜索历史</div>
+            <div id="search-history-list" class="search-history-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="filter-options">
+        <select id="anxiety-filter" class="filter-select">
+          <option value="all" data-i18n="filterAll">全部焦虑值</option>
+          <option value="high" data-i18n="filterHigh">高焦虑 (≥70)</option>
+          <option value="medium" data-i18n="filterMedium">中焦虑 (40-69)</option>
+          <option value="low" data-i18n="filterLow">低焦虑 (<40)</option>
+        </select>
+        <select id="category-filter" class="filter-select">
+          <option value="all" data-i18n="filterAllCategories">全部分类</option>
+        </select>
+      </div>
+    </div>
 
     <div class="view-mode-selector">
       <label>
@@ -47,6 +133,20 @@
         <input type="radio" name="view-mode" value="category">
         <span data-i18n="viewByCategory">按分类</span>
       </label>
+      <label>
+        <input type="radio" name="view-mode" value="group">
+        <span data-i18n="viewByGroup">按分组</span>
+      </label>
+    </div>
+
+    <!-- 批量操作栏 -->
+    <div id="batch-actions-bar" class="batch-actions-bar" style="display: none;">
+      <span id="batch-count" class="batch-count" data-i18n="selectedTabs">已选择 0 个</span>
+      <button id="select-all-btn" class="action-btn" data-i18n="selectAll">全选</button>
+      <button id="deselect-all-btn" class="action-btn" data-i18n="deselectAll">取消全选</button>
+      <button id="batch-close" class="action-btn danger" data-i18n="batchClose">批量关闭</button>
+      <button id="batch-archive" class="action-btn" data-i18n="batchArchive">批量归档</button>
+      <button id="batch-cancel" class="action-btn" data-i18n="exitBatchMode">退出批量</button>
     </div>
 
     <div id="loading" class="loading">
@@ -57,6 +157,233 @@
     <div id="content" class="content">
       <div id="suggestions-container" class="suggestions"></div>
       <div id="tabs-container" class="tabs-container"></div>
+    </div>
+
+    <!-- 设置视图 -->
+    <div id="settings-view" class="settings-view" style="display: none;">
+      <div class="settings-view-header">
+        <button id="settings-back-btn" class="back-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+          </svg>
+          <span data-i18n="back">返回</span>
+        </button>
+        <h2 data-i18n="settings">设置</h2>
+      </div>
+      <div class="settings-content">
+        <div class="settings-tabs">
+          <button class="settings-tab active" data-tab="classification">分类规则</button>
+          <button class="settings-tab" data-tab="anxiety">焦虑评分</button>
+          <button class="settings-tab" data-tab="statistics">统计图表</button>
+          <button class="settings-tab" data-tab="notifications">通知和提醒</button>
+        </div>
+        
+        <!-- 分类规则设置 -->
+        <div id="classification-settings" class="settings-panel active">
+          <div class="settings-section">
+            <h3 data-i18n="customClassificationRules">自定义分类规则</h3>
+            <button id="add-rule-btn" class="action-btn" data-i18n="addRule">添加规则</button>
+            <div id="rules-list" class="rules-list"></div>
+          </div>
+        </div>
+        
+        <!-- 焦虑评分设置 -->
+        <div id="anxiety-settings" class="settings-panel">
+          <div class="settings-section">
+            <h3 data-i18n="customAnxietyWeights">自定义焦虑评分权重</h3>
+            <div class="weight-presets">
+              <button class="preset-btn" data-preset="default" data-i18n="presetDefault">默认</button>
+              <button class="preset-btn" data-preset="aggressive" data-i18n="presetAggressive">激进清理</button>
+              <button class="preset-btn" data-preset="conservative" data-i18n="presetConservative">保守清理</button>
+            </div>
+            <div id="weights-list" class="weights-list"></div>
+            <div id="anxiety-preview" class="anxiety-preview"></div>
+          </div>
+        </div>
+        
+        <!-- 统计图表 -->
+        <div id="statistics-settings" class="settings-panel">
+          <div class="settings-section">
+            <h3 data-i18n="statisticsCharts">统计图表</h3>
+            <div id="charts-container" class="charts-container"></div>
+          </div>
+        </div>
+        
+        <!-- 通知和提醒设置 -->
+        <div id="notifications-settings" class="settings-panel">
+          <div class="settings-section">
+            <h3 data-i18n="notificationsAndReminders">通知和提醒</h3>
+            
+            <!-- 标签页数量提醒 -->
+            <div class="notification-item">
+              <div class="notification-header">
+                <label class="notification-switch">
+                  <input type="checkbox" id="notify-tab-count" class="notification-checkbox">
+                  <span class="notification-slider"></span>
+                </label>
+                <div class="notification-info">
+                  <h4 data-i18n="tabCountReminder">标签页数量提醒</h4>
+                  <p class="notification-desc" data-i18n="tabCountReminderDesc">当标签页数量超过阈值时提醒</p>
+                </div>
+              </div>
+              <div class="notification-config" id="tab-count-config" style="display: none;">
+                <label>
+                  <span data-i18n="threshold">阈值：</span>
+                  <input type="number" id="tab-count-threshold" min="10" max="200" value="50" class="config-input">
+                  <span data-i18n="tabs">个标签页</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- 高焦虑标签页提醒 -->
+            <div class="notification-item">
+              <div class="notification-header">
+                <label class="notification-switch">
+                  <input type="checkbox" id="notify-high-anxiety" class="notification-checkbox">
+                  <span class="notification-slider"></span>
+                </label>
+                <div class="notification-info">
+                  <h4 data-i18n="highAnxietyReminder">高焦虑标签页提醒</h4>
+                  <p class="notification-desc" data-i18n="highAnxietyReminderDesc">当存在高焦虑值标签页时提醒</p>
+                </div>
+              </div>
+              <div class="notification-config" id="high-anxiety-config" style="display: none;">
+                <label>
+                  <span data-i18n="anxietyThreshold">焦虑值阈值：</span>
+                  <input type="number" id="high-anxiety-threshold" min="50" max="100" value="70" class="config-input">
+                  <span data-i18n="points">分</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- 定期清理提醒 -->
+            <div class="notification-item">
+              <div class="notification-header">
+                <label class="notification-switch">
+                  <input type="checkbox" id="notify-cleanup" class="notification-checkbox">
+                  <span class="notification-slider"></span>
+                </label>
+                <div class="notification-info">
+                  <h4 data-i18n="periodicCleanupReminder">定期清理提醒</h4>
+                  <p class="notification-desc" data-i18n="periodicCleanupReminderDesc">定期提醒清理标签页</p>
+                </div>
+              </div>
+              <div class="notification-config" id="cleanup-config" style="display: none;">
+                <label>
+                  <span data-i18n="reminderInterval">提醒间隔：</span>
+                  <select id="cleanup-interval" class="config-select">
+                    <option value="1" data-i18n="daily">每天</option>
+                    <option value="3" data-i18n="every3Days">每3天</option>
+                    <option value="7" data-i18n="weekly">每周</option>
+                    <option value="30" data-i18n="monthly">每月</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            
+            <!-- 会话备份提醒 -->
+            <div class="notification-item">
+              <div class="notification-header">
+                <label class="notification-switch">
+                  <input type="checkbox" id="notify-backup" class="notification-checkbox">
+                  <span class="notification-slider"></span>
+                </label>
+                <div class="notification-info">
+                  <h4 data-i18n="sessionBackupReminder">会话备份提醒</h4>
+                  <p class="notification-desc" data-i18n="sessionBackupReminderDesc">定期提醒备份会话数据</p>
+                </div>
+              </div>
+              <div class="notification-config" id="backup-config" style="display: none;">
+                <label>
+                  <span data-i18n="reminderInterval">提醒间隔：</span>
+                  <select id="backup-interval" class="config-select">
+                    <option value="7" data-i18n="weekly">每周</option>
+                    <option value="14" data-i18n="every2Weeks">每2周</option>
+                    <option value="30" data-i18n="monthly">每月</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            
+            <div class="notification-actions">
+              <button id="test-notification-btn" class="action-btn" data-i18n="testNotification">测试通知</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 无障碍设置 -->
+        <div id="accessibility-settings" class="settings-panel" role="tabpanel" aria-labelledby="accessibility-tab">
+          <div class="settings-section">
+            <h3 data-i18n="accessibilitySettings">无障碍设置</h3>
+            
+            <!-- 字体大小调整 -->
+            <div class="accessibility-item">
+              <div class="accessibility-header">
+                <label for="font-size-slider" class="accessibility-label">
+                  <h4 data-i18n="fontSize">字体大小</h4>
+                  <p class="accessibility-desc" data-i18n="fontSizeDesc">调整界面字体大小</p>
+                </label>
+              </div>
+              <div class="accessibility-config">
+                <input type="range" id="font-size-slider" min="12" max="20" value="14" step="1" 
+                       aria-label="字体大小调整" aria-valuemin="12" aria-valuemax="20" aria-valuenow="14">
+                <div class="font-size-display">
+                  <span id="font-size-value">14</span>
+                  <span>px</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 高对比度模式 -->
+            <div class="accessibility-item">
+              <div class="accessibility-header">
+                <label class="accessibility-switch">
+                  <input type="checkbox" id="high-contrast-toggle" class="accessibility-checkbox" aria-label="高对比度模式">
+                  <span class="accessibility-slider"></span>
+                </label>
+                <div class="accessibility-info">
+                  <h4 data-i18n="highContrastMode">高对比度模式</h4>
+                  <p class="accessibility-desc" data-i18n="highContrastModeDesc">提高界面对比度，改善可读性</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 键盘导航提示 -->
+            <div class="accessibility-item">
+              <div class="accessibility-header">
+                <h4 data-i18n="keyboardNavigation">键盘导航</h4>
+              </div>
+              <div class="keyboard-shortcuts-list" role="list" aria-label="键盘快捷键列表">
+                <div class="keyboard-shortcut-item" role="listitem">
+                  <kbd>Tab</kbd>
+                  <span data-i18n="keyboardTab">在元素间导航</span>
+                </div>
+                <div class="keyboard-shortcut-item" role="listitem">
+                  <kbd>Enter</kbd>
+                  <span data-i18n="keyboardEnter">激活按钮或链接</span>
+                </div>
+                <div class="keyboard-shortcut-item" role="listitem">
+                  <kbd>Esc</kbd>
+                  <span data-i18n="keyboardEsc">关闭菜单或取消操作</span>
+                </div>
+                <div class="keyboard-shortcut-item" role="listitem">
+                  <kbd>Ctrl/Cmd + K</kbd>
+                  <span data-i18n="keyboardSearch">聚焦搜索框</span>
+                </div>
+                <div class="keyboard-shortcut-item" role="listitem">
+                  <kbd>Ctrl/Cmd + B</kbd>
+                  <span data-i18n="keyboardBatch">切换批量模式</span>
+                </div>
+                <div class="keyboard-shortcut-item" role="listitem">
+                  <kbd>1-3</kbd>
+                  <span data-i18n="keyboardView">切换视图模式</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 归档会话视图 -->
@@ -70,12 +397,23 @@
           <span data-i18n="back">返回</span>
         </button>
         <h2 data-i18n="archivedSessions">已归档的会话</h2>
+        <div class="sessions-header-actions">
+          <button id="export-sessions-btn" class="action-btn" data-i18n="exportSessions">导出会话</button>
+          <button id="import-sessions-btn" class="action-btn" data-i18n="importSessions">导入会话</button>
+          <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        </div>
+      </div>
+      <div class="sessions-search-bar" style="display: none;">
+        <input type="text" id="sessions-search-input" class="search-input" data-i18n-placeholder="sessionSearch" placeholder="搜索会话...">
       </div>
       <div id="sessions-list" class="sessions-list"></div>
     </div>
   </div>
 
   <script src="i18n.js"></script>
+  <script src="themes.js"></script>
+  <script src="utils.js"></script>
+  <script src="toast.js"></script>
   <script src="tabClassifier.js"></script>
   <script src="anxietyScorer.js"></script>
   <script src="tabManager.js"></script>

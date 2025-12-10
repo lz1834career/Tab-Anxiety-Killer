@@ -2,7 +2,7 @@
 
 class TabClassifier {
   constructor() {
-    this.categories = {
+    this.defaultCategories = {
       shopping: {
         name: '购物',
         domains: ['taobao', 'tmall', 'amazon', 'jd', 'jd.com', 'ebay', 'alibaba'],
@@ -45,6 +45,110 @@ class TabClassifier {
         keywords: []
       }
     };
+    this.categories = { ...this.defaultCategories };
+    this.customRules = [];
+    this.loadCustomRules();
+  }
+
+  /**
+   * 从存储加载自定义规则
+   */
+  async loadCustomRules() {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['customClassificationRules'], (result) => {
+        if (result.customClassificationRules) {
+          this.customRules = result.customClassificationRules;
+          // 合并自定义规则到分类中
+          this.customRules.forEach(rule => {
+            if (!this.categories[rule.id]) {
+              this.categories[rule.id] = {
+                name: rule.name,
+                domains: rule.domains || [],
+                keywords: rule.keywords || [],
+                urlPattern: rule.urlPattern ? new RegExp(rule.urlPattern) : null,
+                priority: rule.priority || 0,
+                isCustom: true
+              };
+            }
+          });
+        }
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * 保存自定义规则
+   */
+  async saveCustomRules() {
+    return new Promise((resolve) => {
+      chrome.storage.local.set({ customClassificationRules: this.customRules }, () => {
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * 添加自定义规则
+   */
+  async addCustomRule(rule) {
+    const ruleId = rule.id || `custom_${Date.now()}`;
+    const newRule = {
+      id: ruleId,
+      name: rule.name,
+      domains: rule.domains || [],
+      keywords: rule.keywords || [],
+      urlPattern: rule.urlPattern || null,
+      priority: rule.priority || 0
+    };
+    this.customRules.push(newRule);
+    this.categories[ruleId] = {
+      name: newRule.name,
+      domains: newRule.domains,
+      keywords: newRule.keywords,
+      urlPattern: newRule.urlPattern ? new RegExp(newRule.urlPattern) : null,
+      priority: newRule.priority,
+      isCustom: true
+    };
+    await this.saveCustomRules();
+    return newRule;
+  }
+
+  /**
+   * 更新自定义规则
+   */
+  async updateCustomRule(ruleId, rule) {
+    const index = this.customRules.findIndex(r => r.id === ruleId);
+    if (index !== -1) {
+      this.customRules[index] = { ...this.customRules[index], ...rule };
+      if (this.categories[ruleId]) {
+        this.categories[ruleId] = {
+          ...this.categories[ruleId],
+          name: rule.name || this.categories[ruleId].name,
+          domains: rule.domains || this.categories[ruleId].domains,
+          keywords: rule.keywords || this.categories[ruleId].keywords,
+          urlPattern: rule.urlPattern ? new RegExp(rule.urlPattern) : this.categories[ruleId].urlPattern,
+          priority: rule.priority !== undefined ? rule.priority : this.categories[ruleId].priority
+        };
+      }
+      await this.saveCustomRules();
+    }
+  }
+
+  /**
+   * 删除自定义规则
+   */
+  async deleteCustomRule(ruleId) {
+    this.customRules = this.customRules.filter(r => r.id !== ruleId);
+    delete this.categories[ruleId];
+    await this.saveCustomRules();
+  }
+
+  /**
+   * 获取自定义规则
+   */
+  getCustomRules() {
+    return this.customRules;
   }
 
   /**
@@ -62,9 +166,13 @@ class TabClassifier {
     const title = (tab.title || '').toLowerCase();
     const urlLower = url.href.toLowerCase();
 
+    // 按优先级排序（优先级高的先检查）
+    const sortedCategories = Object.entries(this.categories)
+      .filter(([key]) => key !== 'other')
+      .sort((a, b) => (b[1].priority || 0) - (a[1].priority || 0));
+
     // 检查每个分类
-    for (const [key, category] of Object.entries(this.categories)) {
-      if (key === 'other') continue;
+    for (const [key, category] of sortedCategories) {
 
       // 检查域名匹配
       const domainMatch = category.domains.some(domain => 
