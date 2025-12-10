@@ -296,6 +296,11 @@ const i18n = {
       toggleBatchMode: 'Batch Mode',
       batchModeEnabled: 'Batch mode enabled, click tabs to select',
       actionError: 'Action failed',
+      networkError: 'Network error, please check your connection',
+      storageError: 'Storage operation failed, please retry',
+      permissionError: 'Insufficient permissions, please check extension settings',
+      validationError: 'Input validation failed',
+      unknownError: 'An unknown error occurred, please retry',
       
       // Statistics
       totalTabs: 'Total',

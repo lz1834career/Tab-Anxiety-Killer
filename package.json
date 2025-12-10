@@ -1,0 +1,25 @@
+{
+  "name": "tab-anxiety-killer",
+  "version": "1.0.1",
+  "description": "智能轻巧的浏览器标签页管理器 - 自动分类、焦虑评分、一键归档",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:unit": "echo \"Unit tests not yet configured\"",
+    "test:integration": "echo \"Integration tests not yet configured\"",
+    "test:e2e": "echo \"E2E tests not yet configured\"",
+    "test:coverage": "echo \"Coverage report not yet configured\"",
+    "lint": "echo \"Linter not yet configured\"",
+    "build": "echo \"Build script not yet configured\""
+  },
+  "keywords": [
+    "chrome-extension",
+    "tab-manager",
+    "productivity",
+    "browser-extension"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
+
